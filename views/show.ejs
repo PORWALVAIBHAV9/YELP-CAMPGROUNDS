@@ -1,0 +1,135 @@
+<% layout('layouts/boilerplate') %>
+<link rel="stylesheet" href="/stylesheets/starrating.css">
+
+<div class="row">
+     <div class="col-6">
+
+
+          <div class="card">
+               <div id="carouselExampleControls" class="carousel slide" data-ride="carousel">
+                    <div class="carousel-inner">
+                      <% campground.images.forEach((img, i)=> { %>
+                         <!-- we do this as this carousle needs avtive class set on its first img div -->
+                      <div class="carousel-item <%= i==0 ? 'active' : '' %>">
+                        <img class="d-block w-100" src="<%=img.url%>" alt="First slide">
+                      </div>
+                      <% } ) %>
+                    </div>
+                    <a class="carousel-control-prev" href="#carouselExampleControls" role="button" data-slide="prev">
+                      <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                      <span class="sr-only"></span>
+                    </a>
+                    <a class="carousel-control-next" href="#carouselExampleControls" role="button" data-slide="next">
+                      <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                      <span class="sr-only"></span>
+                    </a>
+                  </div> 
+
+               <div class="card-body">
+                 <h3 class="card-title"><%=campground.title%></h3>
+                 <p class="card-text"><%= campground.description %></p>
+               </div>
+               <ul class="list-group list-group-flush">
+                 <li class="list-group-item">price: $<%= campground.price %></li>
+                 <li class="list-group-item">Author: <%= campground.author.username %></li>
+                 <li class="list-group-item text-muted">Loacation: <%= campground.location %></li>
+               </ul>
+               <% if(currentUser && campground.author._id.equals(currentUser._id)) {%>
+                    <!-- it works with .equals only so never use ==sign and it i will only hide the button but the req could be send throung postman  -->
+               <div class="card-body ">
+                    <a class="btn btn-info d-inline" href="/campgrounds/<%=campground._id%>/edit" class="card-link">Edit</a>
+                    
+
+                    <form  class="d-inline" action="/campgrounds/<%=campground._id%>?_method=DELETE" method="post">
+                         <button class="btn btn-danger">Delete</button>
+                    </form>
+               </div>
+               <% } %>
+          </div>
+     </div>
+
+
+     <div class="col-6">
+          <div>
+               <div id='map' style='width: 400px; height: 300px;'></div>
+          </div>
+          <% if(currentUser) { %>
+          <h2>Leave a Review</h2>   
+          <form action="/campgrounds/<%= campground._id%>/review" method="post" class="mb-3 validated-form">
+               <!-- <div class="mb-3">
+                    <label class="form-label" for="rating">Rating</label>
+                    <input class="form-range" type="range" min="1" max="5" name="review[rating]" id="rating">
+               </div> -->
+               <fieldset class="starability-basic">
+                    <input type="radio" id="no-rate" class="input-no-rate" name="review[rating]" value="0" checked aria-label="No rating." />
+                    <input type="radio" id="first-rate1" name="review[rating]" value="1" />
+                    <label for="first-rate1" title="Terrible">1 star</label>
+                    <input type="radio" id="first-rate2" name="review[rating]" value="2" />
+                    <label for="first-rate2" title="Not good">2stars</label>
+                    <input type="radio" id="first-rate3" name="review[rating]" value="3" />
+                    <label for="first-rate3" title="Average">3 stars</label>
+                    <input type="radio" id="first-rate4" name="review[rating]" value="4" />
+                    <label for="first-rate4" title="Very good">4 stars</label>
+                    <input type="radio" id="first-rate5" name="review[rating]" value="5" />
+                    <label for="first-rate5" title="Amazing">5 stars</label>
+               </fieldset>
+               <div class="mb-3">
+                    <label class="form-label" for="body">Review</label>
+                    <textarea class="form-control" name="review[body]" id="body" cols="30" rows="3" required></textarea>
+
+               </div>
+               <button class="btn btn-success mb-3">Submit</button>
+          </form>
+          <% } %>
+
+          <% for(let review of campground.reviews) { %>
+               <div class="card mb-3 ">
+                    <div class="card-body">
+                         <%if(review.author){ %>
+                         <h4><%=review.author.username%></h4>
+                         <% } %>
+                         <h5 class="card-title">Rating:
+                              <p class="starability-result" data-rating= <%=review.rating%>>
+                                Rated:<%=review.rating%>
+                              </p></h5>
+                         <p class="card-text">Review: <%= review.body %></p>
+
+                         <%=console.log(campground.geometry)%>
+                         <% if(currentUser && review.author && review.author._id.equals(currentUser._id)) { %>
+                         <form action="/campgrounds/<%=campground._id%>/review/<%=review._id%>?_method=delete" method="post">
+                              <button class="btn btn-danger">Delete</button>
+                         </form>
+                         <% } %>
+                         
+      
+                    </div>
+               </div>
+          <% } %>
+
+
+          
+     </div>
+
+     
+</div>
+
+
+<script>
+mapboxgl.accessToken = '<%-process.env.mapbox_token%>';
+     const map = new mapboxgl.Map({
+         container: 'map', // container ID
+         style: 'mapbox://styles/mapbox/streets-v12', // style URL
+         center: [<%-campground.geometry.coordinates%>], // starting position [lng, lat]
+         zoom: 10 // starting zoom
+     });
+
+     map.addControl(new mapboxgl.NavigationControl())
+</script>x
+
+<script>
+new mapboxgl.Marker()
+     .setLngLat([<%-campground.geometry.coordinates%>])
+     .addTo(map)
+</script>
+     
+   
